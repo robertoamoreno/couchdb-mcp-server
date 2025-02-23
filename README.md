@@ -71,11 +71,11 @@ The server automatically detects the CouchDB version and enables features accord
 
 ## Configuration
 
-The server requires a CouchDB connection URL. This can be provided through environment variables:
+The server requires a CouchDB connection URL and version. These can be provided through environment variables:
 
 ```bash
 COUCHDB_URL=http://username:password@localhost:5984
-```
+COUCHDB_VERSION=1.7.2
 
 You can create a `.env` file in the project root with this configuration. If not provided, it defaults to `http://localhost:5984`.
 

@@ -45,13 +45,12 @@ class CouchDBServer {
   }
 
   private async setupToolHandlers() {
-    const isV3Plus = await isVersion3OrHigher();
+    const version = process.env.COUCHDB_VERSION || '1.7.2';
+    const isV3Plus = parseInt(version.split('.')[0]) >= 3;
     
     // List available tools
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
-        // Base tools available in all versions
-        // Base tools available in all versions
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      const baseTools = [
         {
           name: 'createDatabase',
           description: 'Create a new CouchDB database',
@@ -90,7 +89,7 @@ class CouchDBServer {
         },
         {
           name: 'createDocument',
-          description: 'Create a new document or update an existing document in a database. Include _rev in data to update an existing document.',
+          description: 'Create a new document or update an existing document in a database',
           inputSchema: {
             type: 'object',
             properties: {
@@ -104,7 +103,7 @@ class CouchDBServer {
               },
               data: {
                 type: 'object',
-                description: 'Document data. Include _rev field to update an existing document.',
+                description: 'Document data',
               },
             },
             required: ['dbName', 'docId', 'data'],
@@ -127,92 +126,95 @@ class CouchDBServer {
             },
             required: ['dbName', 'docId'],
           },
+        }
+      ];
+
+      const mangoTools = isV3Plus ? [
+        {
+          name: 'createMangoIndex',
+          description: 'Create a new Mango index (CouchDB 3.x+)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dbName: {
+                type: 'string',
+                description: 'Database name',
+              },
+              indexName: {
+                type: 'string',
+                description: 'Name of the index',
+              },
+              fields: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                },
+                description: 'Fields to index',
+              },
+            },
+            required: ['dbName', 'indexName', 'fields'],
+          },
         },
-        
-        // Mango query tools (CouchDB 3.x+ only)
-        ...(isV3Plus ? [
-          {
-            name: 'createMangoIndex',
-            description: 'Create a new Mango index (CouchDB 3.x+)',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                dbName: {
-                  type: 'string',
-                  description: 'Database name',
-                },
-                indexName: {
-                  type: 'string',
-                  description: 'Name of the index',
-                },
-                fields: {
-                  type: 'array',
-                  items: {
-                    type: 'string'
-                  },
-                  description: 'Fields to index',
-                },
+        {
+          name: 'deleteMangoIndex',
+          description: 'Delete a Mango index (CouchDB 3.x+)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dbName: {
+                type: 'string',
+                description: 'Database name',
               },
-              required: ['dbName', 'indexName', 'fields'],
-            },
-          },
-          {
-            name: 'deleteMangoIndex',
-            description: 'Delete a Mango index (CouchDB 3.x+)',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                dbName: {
-                  type: 'string',
-                  description: 'Database name',
-                },
-                designDoc: {
-                  type: 'string',
-                  description: 'Design document name',
-                },
-                indexName: {
-                  type: 'string',
-                  description: 'Name of the index',
-                },
+              designDoc: {
+                type: 'string',
+                description: 'Design document name',
               },
-              required: ['dbName', 'designDoc', 'indexName'],
-            },
-          },
-          {
-            name: 'listMangoIndexes',
-            description: 'List all Mango indexes in a database (CouchDB 3.x+)',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                dbName: {
-                  type: 'string',
-                  description: 'Database name',
-                },
+              indexName: {
+                type: 'string',
+                description: 'Name of the index',
               },
-              required: ['dbName'],
             },
+            required: ['dbName', 'designDoc', 'indexName'],
           },
-          {
-            name: 'findDocuments',
-            description: 'Query documents using Mango query (CouchDB 3.x+)',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                dbName: {
-                  type: 'string',
-                  description: 'Database name',
-                },
-                query: {
-                  type: 'object',
-                  description: 'Mango query object',
-                },
+        },
+        {
+          name: 'listMangoIndexes',
+          description: 'List all Mango indexes in a database (CouchDB 3.x+)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dbName: {
+                type: 'string',
+                description: 'Database name',
               },
-              required: ['dbName', 'query'],
             },
+            required: ['dbName'],
           },
-        ] : []),
-      ],
-    }));
+        },
+        {
+          name: 'findDocuments',
+          description: 'Query documents using Mango query (CouchDB 3.x+)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              dbName: {
+                type: 'string',
+                description: 'Database name',
+              },
+              query: {
+                type: 'object',
+                description: 'Mango query object',
+              },
+            },
+            required: ['dbName', 'query'],
+          },
+        }
+      ] : [];
+
+      return {
+        tools: [...baseTools, ...mangoTools]
+      };
+    });
 
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
