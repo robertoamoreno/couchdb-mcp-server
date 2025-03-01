@@ -1,4 +1,5 @@
 # couchdb-mcp-server
+[![smithery badge](https://smithery.ai/badge/@robertoamoreno/couchdb-mcp-server)](https://smithery.ai/server/@robertoamoreno/couchdb-mcp-server)
 
 A Model Context Protocol server for interacting with CouchDB
 
@@ -97,6 +98,14 @@ npm run watch
 ```
 
 ## Installation
+
+### Installing via Smithery
+
+To install couchdb-mcp-server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@robertoamoreno/couchdb-mcp-server):
+
+```bash
+npx -y @smithery/cli install @robertoamoreno/couchdb-mcp-server --client claude
+```
 
 To use with Claude Desktop, add the server config:
 
