@@ -1,0 +1,32 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - couchdbUrl
+    properties:
+      couchdbUrl:
+        type: string
+        description: The CouchDB connection URL to connect the server to. e.g.,
+          http://username:password@localhost:5984
+      couchdbVersion:
+        type: string
+        default: 1.7.2
+        description: CouchDB version to determine features. Defaults to 1.7.2.
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'node',
+      args: ['build/index.js'],
+      env: {
+        COUCHDB_URL: config.couchdbUrl,
+        COUCHDB_VERSION: config.couchdbVersion || '1.7.2'
+      }
+    })
+  exampleConfig:
+    couchdbUrl: http://admin:password@localhost:5984
+    couchdbVersion: 3.1.1
